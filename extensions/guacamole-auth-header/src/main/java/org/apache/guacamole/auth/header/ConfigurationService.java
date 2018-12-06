@@ -23,6 +23,9 @@ import com.google.inject.Inject;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Service for retrieving configuration information for HTTP header-based 
  * authentication.
@@ -48,10 +51,16 @@ public class ConfigurationService {
      *     If guacamole.properties cannot be parsed.
      */
     public String getHttpAuthHeader() throws GuacamoleException {
-        return environment.getProperty(
+        String fullValue = environment.getProperty(
             HTTPHeaderGuacamoleProperties.HTTP_AUTH_HEADER,
             "REMOTE_USER"
         );
+
+        Pattern pat = Pattern.compile("/CN=([^/]+)/emailAddress=(([^@]+)@.*)");
+        Matcher matcher = pat.matcher(fullValue);
+
+        String username = matcher.group(3);
+        return username;
     }
 
 }
