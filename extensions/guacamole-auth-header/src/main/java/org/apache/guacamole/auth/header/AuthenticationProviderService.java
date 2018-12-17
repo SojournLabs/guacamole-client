@@ -29,6 +29,9 @@ import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsExce
 import org.apache.guacamole.auth.header.user.AuthenticatedUser;
 import java.security.Principal;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Service providing convenience functions for the HTTP Header
  * AuthenticationProvider implementation.
@@ -70,9 +73,17 @@ public class AuthenticationProviderService {
         if (request != null) {
 
             // Get the username from the header configured in guacamole.properties
-            String username = request.getHeader(confService.getHttpAuthHeader());
+            String fullValue = request.getHeader(confService.getHttpAuthHeader());
 
-            if (username != null) {
+            if (fullValue == null) {
+                throw new GuacamoleInvalidCredentialsException("Invalid login.", CredentialsInfo.USERNAME_PASSWORD);
+            }
+
+            Pattern pat = Pattern.compile(".*/emailAddress=(([^@]+)@.*).*");
+            Matcher matcher = pat.matcher(fullValue);
+
+            if (matcher.matches()) {
+                String username = matcher.group(2);
                 AuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
                 authenticatedUser.init(username, credentials);
                 return authenticatedUser;
